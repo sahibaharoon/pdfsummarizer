@@ -1,0 +1,8 @@
+streamlit
+transformers
+torch
+PyMuPDF
+keybert
+sentence-transformers
+wordcloud
+matplotlib
