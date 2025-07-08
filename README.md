@@ -35,7 +35,8 @@ Coming soon on Streamlit Cloud
 📦 Built With
 
 Streamlit
-HuggingFace Transformers
+HuggingFace 
+Transformers
 KeyBERT
 PyMuPDF
 WordCloud
