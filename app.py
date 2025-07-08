@@ -2,40 +2,124 @@ import streamlit as st
 from utils.pdf_reader import extract_text_from_pdf
 from utils.summarizer import summarize_text
 from utils.keywords import extract_keywords
-from streamlit_lottie import st_lottie
 from wordcloud import WordCloud
 import matplotlib.pyplot as plt
 from reportlab.pdfgen import canvas
-import numpy as np
 import os
-import requests
+import re
 
-# Page config
-st.set_page_config(page_title="PDF Summarizer", layout="centered")
+# -------- PAGE CONFIG --------
+st.set_page_config(
+    page_title="PDF Summarizer Pro",
+    page_icon="📄",
+    layout="centered",
+    initial_sidebar_state="expanded"
+)
 
-# Load Lottie animation
-def load_lottie_url(url):
-    r = requests.get(url)
-    if r.status_code != 200:
-        return None
-    return r.json()
+# -------- CUSTOM CSS --------
+def set_custom_style():
+    st.markdown("""
+    <style>
+    :root {
+        --primary: #4f8bf9;
+        --background: #ffffff;
+        --secondary-background: #f9fafc;
+        --text: #2c3e50;
+        --border: #e1e4e8;
+    }
+    
+    [data-theme="dark"] {
+        --primary: #6ea0f0;
+        --background: #1a1a1a;
+        --secondary-background: #2d2d2d;
+        --text: #f0f0f0;
+        --border: #444444;
+    }
 
-LOTTIE_LOADING_URL = "https://lottie.host/354436a4-312b-4458-b5fd-3cdd835cf825/yOZAm7lPcl.json"
-loading_animation = load_lottie_url(LOTTIE_LOADING_URL)
+    .main {
+        background-color: var(--background);
+        color: var(--text);
+    }
 
-# Title
-st.markdown("<h1 style='text-align: center;'>📘 PDF → AI Summary & Keywords</h1>", unsafe_allow_html=True)
-st.markdown("""
-Upload any PDF to:
-- 🧠 Summarize content instantly
-- 🗂 Extract meaningful keywords
-- ☁️ See a beautiful word cloud
-- 📥 Download as `.txt` or `.pdf`
+    .stButton>button {
+        background-color: var(--primary);
+        color: white;
+        border-radius: 8px;
+        padding: 0.5rem 1rem;
+        border: none;
+        transition: all 0.3s;
+    }
 
----  
+    .stButton>button:hover {
+        opacity: 0.9;
+        transform: scale(1.02);
+    }
+
+    .stTextArea>div>div>textarea {
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        background-color: var(--secondary-background);
+        color: var(--text);
+    }
+
+    h1, h2, h3 {
+        color: var(--primary);
+    }
+
+    .wordcloud-container {
+        background-color: var(--secondary-background);
+        border-radius: 8px;
+        padding: 20px;
+        margin-top: 10px;
+    }
+
+    .summary-box {
+        background-color: var(--secondary-background);
+        border-radius: 8px;
+        padding: 15px;
+        border-left: 4px solid var(--primary);
+    }
+
+    hr {
+        margin: 1.5rem 0;
+        border: 0;
+        border-top: 1px solid var(--border);
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
+set_custom_style()
+
+
+
+# -------- SIDEBAR --------
+st.sidebar.title("📘 About")
+st.sidebar.markdown("""
+**PDF Summarizer Pro** helps you quickly:
+- Understand long documents
+- Identify key topics
+- Save reading time
 """)
 
-uploaded_file = st.file_uploader("📂 Upload a PDF file", type=["pdf"])
+st.sidebar.markdown("---")
+st.sidebar.markdown("### How to use:")
+st.sidebar.markdown("""
+1. Upload your PDF
+2. Wait for processing
+3. Review results
+4. Download if needed
+""")
+
+# -------- MAIN PAGE --------
+col1, col2 = st.columns([3, 1])
+with col1:
+    st.markdown("<h1 style='margin-bottom: 10px;'>📄 PDF Summarizer Pro</h1>", unsafe_allow_html=True)
+    st.markdown("<p style='color: var(--text); opacity: 0.8; margin-bottom: 30px;'>Transform documents into concise summaries with key topics</p>", unsafe_allow_html=True)
+
+with col2:
+    st.write("")
+
+uploaded_file = st.file_uploader("", type=["pdf"], accept_multiple_files=False, key="file_uploader")
 
 if uploaded_file:
     with open("temp.pdf", "wb") as f:
@@ -43,53 +127,51 @@ if uploaded_file:
 
     base_filename = os.path.splitext(uploaded_file.name)[0]
 
-    with st.container():
-        st_lottie(loading_animation, height=200)
-        with st.spinner("⏳ Extracting text from your PDF..."):
-            text = extract_text_from_pdf("temp.pdf")
+    with st.spinner("Analyzing document..."):
+        text = extract_text_from_pdf("temp.pdf")
 
-    st.subheader("📜 Extracted Text")
-    st.text_area("Raw Text", text[:2000] + "...", height=200)
+    with st.expander("📜 View extracted text"):
+        st.text_area("", text[:2000] + ("..." if len(text) > 2000 else ""), height=200, key="extracted_text")
 
-    with st.container():
-        st_lottie(loading_animation, height=200)
-        with st.spinner("🧠 Summarizing..."):
-            summary = summarize_text(text)
+    st.markdown("### 📝 Document Summary")
+    with st.spinner("Creating summary..."):
+        summary = summarize_text(text)
 
-    st.subheader("📝 AI Summary")
-    st.write(summary)
+    st.markdown(f'<div class="summary-box">{summary}</div>', unsafe_allow_html=True)
 
-    with st.container():
-        st_lottie(loading_animation, height=200)
-        with st.spinner("🔍 Extracting keywords..."):
-            keywords = extract_keywords(text)
+    with st.spinner("Identifying key topics..."):
+        keywords = extract_keywords(text)
 
-    # Filter out junky keywords (like URLs)
-    clean_keywords = [kw for kw in keywords if not kw.startswith("http") and len(kw) < 25]
+    if keywords:
+        st.markdown("### 🔍 Key Topics")
+        st.markdown("<div style='line-height: 2.5;'>" + " ".join([
+            f"<span style='background-color: var(--primary); color: white; padding: 4px 12px; border-radius: 20px; margin-right: 8px; display: inline-block;'>{kw}</span>"
+            for kw in keywords]) + "</div>", unsafe_allow_html=True)
 
-    st.subheader("🗂️ Keywords")
-    st.write(", ".join(clean_keywords))
+        # Word Cloud
+        st.markdown("### ☁️ Word Cloud")
+        theme = st.get_option("theme.base")
+        wc = WordCloud(
+            width=800,
+            height=400,
+            background_color="black" if theme == "dark" else "white",
+            colormap='plasma',
+            collocations=False
+        ).generate(" ".join(keywords))
 
-    # Word Cloud
-    st.subheader("☁️ Word Cloud")
-    wc = WordCloud(
-        width=800,
-        height=400,
-        background_color='white',
-        colormap='plasma'
-    ).generate(" ".join(clean_keywords))
+        fig, ax = plt.subplots(figsize=(10, 5))
+        ax.imshow(wc, interpolation='bilinear')
+        ax.axis('off')
+        st.pyplot(fig)
+    else:
+        st.warning("Not enough topics to visualize.")
 
-    fig, ax = plt.subplots(figsize=(10, 6))
-    ax.imshow(wc, interpolation='bilinear')
-    ax.axis('off')
-    st.pyplot(fig)
-
-    # Save summary as TXT
+    # Save as TXT
     txt_filename = f"{base_filename}_summary.txt"
     with open(txt_filename, "w") as f:
         f.write(summary)
 
-    # Save summary as PDF
+    # Save as PDF
     pdf_filename = f"{base_filename}_summary.pdf"
     def save_summary_as_pdf(text, filename):
         c = canvas.Canvas(filename)
@@ -105,17 +187,20 @@ if uploaded_file:
 
     save_summary_as_pdf(summary, pdf_filename)
 
-    # Download buttons
-    st.subheader("📥 Download Summary")
-    with open(txt_filename, "rb") as f:
-        st.download_button("⬇️ Download as .txt", data=f, file_name=txt_filename, mime="text/plain")
-
-    with open(pdf_filename, "rb") as f:
-        st.download_button("⬇️ Download as .pdf", data=f, file_name=pdf_filename, mime="application/pdf")
+    st.markdown("### 📥 Download Options")
+    col1, col2 = st.columns(2)
+    with col1:
+        with open(txt_filename, "rb") as f:
+            st.download_button("Download as Text", data=f, file_name=txt_filename, mime="text/plain")
+    with col2:
+        with open(pdf_filename, "rb") as f:
+            st.download_button("Download as PDF", data=f, file_name=pdf_filename, mime="application/pdf")
 
 else:
-    st.info("📄 Upload a PDF to begin.")
+    st.info("⬆️ Upload a PDF to get started")
 
-# Footer credit
+
+
+# Footer
 st.markdown("---")
-st.markdown("<p style='text-align:center;'>Made with ❤️ by <strong>Sahiba Haroon</strong></p>", unsafe_allow_html=True)
+st.markdown("<p style='text-align: center; color: var(--text); opacity: 0.7;'>Created with ❤️ by Sahiba Haroon</p>", unsafe_allow_html=True)
