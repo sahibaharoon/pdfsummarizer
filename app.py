@@ -28,13 +28,6 @@ def set_custom_style():
         --border: #e1e4e8;
     }
     
-    [data-theme="dark"] {
-        --primary: #6ea0f0;
-        --background: #1a1a1a;
-        --secondary-background: #2d2d2d;
-        --text: #f0f0f0;
-        --border: #444444;
-    }
 
     .main {
         background-color: var(--background);
