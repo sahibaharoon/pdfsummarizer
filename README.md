@@ -32,16 +32,16 @@ A Streamlit app to **summarize any PDF**, extract keywords, and generate a **bea
 
 Coming soon on Streamlit Cloud
 
-📦 Built With
+## 📦 Built With
 
-Streamlit
-HuggingFace 
-Transformers
-KeyBERT
-PyMuPDF
-WordCloud
-Matplotlib
-ReportLab
-🙋‍♀️ Author
+- Streamlit
+- HuggingFace 
+- Transformers
+- KeyBERT
+- PyMuPDF
+- WordCloud
+- Matplotlib
+- ReportLab
+## 🙋‍♀️ Author
 
 Made with ❤️ by Sahiba Haroon
