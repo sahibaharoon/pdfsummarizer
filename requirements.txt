@@ -1,8 +1,9 @@
 streamlit
-transformers
 torch
-PyMuPDF
+transformers
 keybert
-sentence-transformers
+PyMuPDF
 wordcloud
 matplotlib
+reportlab
+pillow
