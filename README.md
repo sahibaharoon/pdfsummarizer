@@ -30,7 +30,7 @@ A Streamlit app to **summarize any PDF**, extract keywords, and generate a **bea
 
 🌐 Live App
 
-Coming soon on Streamlit Cloud
+- https://pdfsummarizer-sahiba.streamlit.app
 
 ## 📦 Built With
 
